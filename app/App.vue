@@ -80,7 +80,7 @@
                     <div class="row">
                         <div class="col-md-8">
                             <div class="tomo-footer__copyright">
-                                TomoMaster &copy; {{ (new Date()).getFullYear() }} -
+                                Forked from TomoMaster &copy; {{ (new Date()).getFullYear() }} -
                                 <a
                                     :href="`https://github.com/tomochain/tomomaster/releases/tag/v${version}`"
                                     class="version-tag">
