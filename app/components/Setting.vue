@@ -747,7 +747,7 @@ export default {
                     }
                 })
             } else {
-                this.$toasted.show('Not enough TOMO for transaction fee', {
+                this.$toasted.show('Not enough CLMP for transaction fee', {
                     type : 'info'
                 })
             }

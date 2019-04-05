@@ -12,7 +12,7 @@
                 </h4>
                 <p class="md-content">
                     You have {{ event }}
-                    <span class="color-white">{{ amount }} TOMO</span> for candidate
+                    <span class="color-white">{{ amount }} CLMP</span> for candidate
                     <router-link :to="`/candidate/${candidate}`">
                     {{ truncate(candidate, 20) }}</router-link> successfully.
                     <br ><br >
@@ -85,7 +85,7 @@ export default {
                         self.candidate = transaction.candidate
                         self.txUrl = urljoin(self.config.explorerUrl, `/txs/${self.tx}`)
                         // self.description = `You have ${event}
-                        // <span class="color-white">${amount} TOMO</span> for candidate
+                        // <span class="color-white">${amount} CLMP</span> for candidate
                         // <router-link to="/candidate/${transaction.candidate}">${transaction.candidate}</router-link>
                         // successfully.
                         // <br/><br/>

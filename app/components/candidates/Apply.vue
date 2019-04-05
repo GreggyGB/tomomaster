@@ -11,7 +11,7 @@
                 <ul class="tomo-list list-unstyled">
                     <li class="tomo-list__item">
                         <i class="tm-tomo tomo-list__icon" />
-                        <span class="tomo-list__text">You have to deposit at least 50,000 TOMO</span>
+                        <span class="tomo-list__text">You have to deposit at least 50,000 CLMP</span>
                     </li>
                     <li class="tomo-list__item">
                         <i class="tm-lock tomo-list__icon" />
@@ -29,7 +29,7 @@
                     novalidate
                     @submit.prevent="validate()">
                     <b-form-group
-                        :description="`How much TOMO do you want to deposit? TX fee: ${txFee} TOMO`"
+                        :description="`How much CLMP do you want to deposit? TX fee: ${txFee} CLMP`"
                         label="Vote"
                         label-for="apply-value">
                         <b-input-group>
@@ -47,7 +47,7 @@
                                 class="text-danger">Required field</span>
                             <span
                                 v-else-if="$v.applyValue.$dirty && !$v.applyValue.minValue"
-                                class="text-danger">Must be greater than 50,000 TOMO</span>
+                                class="text-danger">Must be greater than 50,000 CLMP</span>
                         </b-input-group>
                     </b-form-group>
                     <b-form-group
@@ -253,7 +253,7 @@ export default {
                     const convertedAmount = new BigNumber(this.applyValue)
 
                     if (this.balance.isLessThan(convertedAmount)) {
-                        this.$toasted.show(`Not enough TOMO`, {
+                        this.$toasted.show(`Not enough CLMP`, {
                             type: 'error'
                         })
                         return false
