@@ -115,35 +115,35 @@
                             <ul class="list-inline">
                                 <li class="list-inline-item">
                                     <a
-                                        href="https://t.me/tomochain"
+                                        href="https://t.me/caelumofficial"
                                         target="_blank">
                                         <i class="tm-telegram" />
                                     </a>
                                 </li>
                                 <li class="list-inline-item">
                                     <a
-                                        href="https://www.facebook.com/tomochainofficial"
+                                        href="https://www.facebook.com/"
                                         target="_blank">
                                         <i class="tm-facebook" />
                                     </a>
                                 </li>
                                 <li class="list-inline-item">
                                     <a
-                                        href="https://twitter.com/TomoChainANN"
+                                        href="https://twitter.com/CaelumToken"
                                         target="_blank">
                                         <i class="tm-twitter" />
                                     </a>
                                 </li>
                                 <li class="list-inline-item">
                                     <a
-                                        href="https://github.com/tomochain/"
+                                        href="https://github.com/caelumproject"
                                         target="_blank">
                                         <i class="tm-github" />
                                     </a>
                                 </li>
                                 <li class="list-inline-item">
                                     <a
-                                        href="https://www.reddit.com/r/Tomochain/"
+                                        href="https://www.reddit.com/"
                                         target="_blank">
                                         <i class="tm-reddit" />
                                     </a>
