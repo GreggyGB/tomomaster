@@ -1,74 +1,212 @@
 <template>
     <div id="app">
         <div class="page-layout">
-            <b-navbar>
+            <b-navbar
+                toggleable="lg"
+                type="dark"
+                variant="info">
                 <div class="container">
                     <b-navbar-brand to="/">
                         <img src="/app/assets/img/logo.svg" >
                     </b-navbar-brand>
+                    <b-navbar-toggle
+                        target="nav-collapse"
+                        class="btn-menu-sp"/>
+                    <b-collapse
+                        id="nav-collapse"
+                        is-nav>
+                        <!-- Right aligned nav items -->
+                        <b-navbar-nav class="ml-auto ">
+                            <b-nav-form class="search-form">
+                                <auto-complete
+                                    v-model="search"
+                                    :items="items"/>
+                                <b-button
+                                    variant="outline-success"
+                                    type="submit"
+                                    @click="searchCandidate">Search</b-button>
+                            </b-nav-form>
+                        </b-navbar-nav>
+                        <b-navbar-nav class="ml-auto navbar-buttons">
+                            <b-button
+                                v-if="!isTomonet"
+                                id="btn-become-candidate"
+                                to="/setting"
+                                variant="primary">Login</b-button>
+                            <b-button
+                                v-else
+                                id="btn-become-candidate"
+                                to="/apply"
+                                variant="primary">Become a candidate</b-button>
+                            <b-dropdown
+                                class="dd-setting ml-3"
+                                right
+                                offset="25"
+                                no-caret
+                                variant="link">
+                                <template
+                                    slot="button-content">
+                                    <i
+                                        class="tm-bell icon-2x"
+                                        @click="readClick" />
+                                    <span
+                                        :class="`notification__bell tomo-status-dot tomo-status-dot--yellow`"
+                                        :style="(isTomonet ? (readNoti <= 0 ? 'display: none;': '') : statusClass)"/>
+                                </template>
+                                <b-dropdown-text>
+                                    <div class="notification_header">
+                                        <span class="float-left">Notifications</span>
+                                        <b-button
+                                            variant="primary"
+                                            class="float-right readAllBtn"
+                                            @click="markReadAll">Mark all as read</b-button>
+                                    </div>
+                                </b-dropdown-text>
+                                <b-dropdown-divider />
+                                <div
+                                    v-if="isTomonet"
+                                    class="notification_body">
+                                    <div
+                                        v-if="notifications.length <= 0"
+                                        class="notification_body__empty">
+                                        No notifications.</div>
+                                    <div
+                                        v-for="(value, key) in notifications"
+                                        :key="key">
+                                        <b-dropdown-text v-if="value.event === 'Slash'">
+                                            <div>
+                                                <span
+                                                    :style="value.isRead ? '' :
+                                                    'font-weight: bold;'"
+                                                    class="notification_body__content">
+                                                    <span class="notification_label slashed">Slashed</span>
+                                                    Masternode
+                                                    [<router-link :to="`/candidate/${value.candidate}`">
+                                                        <span class="masternode-name">{{ value.name }}</span>
+                                                    </router-link>]
+                                                    has been slashed
+                                                </span>
+                                                <div class="notification_body__time">TomoMaster -
+                                                    {{ value.createdAt }}</div>
+                                            </div>
+                                        </b-dropdown-text>
+                                        <b-dropdown-divider
+                                            v-if="value.event === 'Slash' &&
+                                            key !== notifications.length - 1"/>
 
-                    <b-nav-form class="search-form">
-                        <auto-complete
-                            v-model="search"
-                            :items="items"/>
-                        <b-button
-                            variant="outline-success"
-                            type="submit"
-                            @click="searchCandidate">Search</b-button>
-                    </b-nav-form>
+                                        <b-dropdown-text v-if="value.event === 'Outtop'">
+                                            <div>
+                                                <span
+                                                    :style="value.isRead ? '' :
+                                                    'font-weight: bold;'"
+                                                    class="notification__content">
+                                                    <span class="notification_label outtop">Out top</span>
+                                                    Masternode [<router-link :to="`/candidate/${value.candidate}`">
+                                                        <span class="masternode-name">{{ value.name }}</span>
+                                                    </router-link>]
+                                                    left the top 150 and is no longer a masternode.
+                                                </span>
+                                                <div class="notification__time">TomoMaster -
+                                                    {{ value.createdAt }}</div>
+                                            </div>
+                                        </b-dropdown-text>
+                                        <b-dropdown-divider
+                                            v-if="value.event === 'Outtop' &&
+                                            key !== notifications.length - 1"/>
 
-                    <div class="navbar-buttons">
-                        <b-button
-                            v-if="!isTomonet"
-                            id="btn-become-candidate"
-                            to="/setting"
-                            variant="primary">Login</b-button>
-                        <b-button
-                            v-else
-                            id="btn-become-candidate"
-                            to="/apply"
-                            variant="primary">Become a candidate</b-button>
+                                        <b-dropdown-text v-if="value.event === 'Propose'">
+                                            <div>
+                                                <span
+                                                    :style="value.isRead ? '' :
+                                                    'font-weight: bold;'"
+                                                    class="notification__content">
+                                                    <span class="notification_label proposed">Proposed</span>
+                                                    Congratulation for having your own new candidate!
+                                                    Its time to gather votes from community by promoting it and
+                                                    be in top 150 to get your first reward.
+                                                </span>
+                                                <div class="notification__time">TomoMaster -
+                                                    {{ value.createdAt }}</div>
+                                            </div>
+                                        </b-dropdown-text>
+                                        <b-dropdown-divider
+                                            v-if="value.event === 'Propose' &&
+                                            key !== notifications.length - 1"/>
 
-                        <!-- <router-link
-                            v-if="isTomonet"
-                            id="btn-setting"
-                            to="/setting">
-                            <i class="tm-cog ml-1 icon-2x" />
-                        </router-link> -->
-
-                        <b-dropdown
-                            v-if="isTomonet"
-                            class="dd-setting"
-                            right
-                            offset="25"
-                            no-caret
-                            variant="primary">
-                            <template
-                                slot="button-content">
-                                <i class="tm-cog ml-2 icon-2x" />
-                            </template>
-                            <b-dropdown-item
-                                :to="`/voter/${account}`"
-                                class="dd-address">
-                                {{ truncate(account, 20) }}
-                            </b-dropdown-item>
-                            <b-dropdown-divider />
-                            <b-dropdown-item
-                                target="_bank"
-                                href="https://bit.ly/2B6p29o">Help</b-dropdown-item>
-                            <b-dropdown-item to="/setting">Settings/Withdraws</b-dropdown-item>
-                            <b-dropdown-divider />
-                            <b-dropdown-item
-                                href="/"
-                                @click="signOut">Sign out</b-dropdown-item>
-                        </b-dropdown>
-
-                        <!-- <router-link
-                        v-if="isTomonet"
-                        id="btn-setting"
-                        to="/setting">
-                        <i class="tm-dots color-btn-bg"/>Setting</router-link> -->
-                    </div>
+                                        <b-dropdown-text v-if="value.event === 'Resign'">
+                                            <div>
+                                                <span
+                                                    :style="value.isRead ? '' :
+                                                    'font-weight: bold;'"
+                                                    class="notification__content">
+                                                    <span class="notification_label resigned">Resigned</span>
+                                                    Masternode [<router-link :to="`/candidate/${value.candidate}`">
+                                                        <span class="masternode-name">{{ value.name }}</span>
+                                                    </router-link>] resigned
+                                                </span>
+                                                <div class="notification__time">TomoMaster -
+                                                    {{ value.createdAt }}</div>
+                                            </div>
+                                        </b-dropdown-text>
+                                        <b-dropdown-divider
+                                            v-if="value.event === 'Resign' &&
+                                            key !== notifications.length - 1"/>
+                                    </div>
+                                </div>
+                                <div v-if="!isTomonet">
+                                    <b-dropdown-text>
+                                        <div style="font-size: 13px;">
+                                            <strong>TomoMaster up to 1.4.0</strong>
+                                            New features have been added to.
+                                            <p>- Added notification for propose, resign,
+                                            slash and out of top 150</p>
+                                            <p>- Add rank column in masternode list table</p>
+                                            <p>- Add masternode name, current cap columns
+                                            in voter transaction table</p>
+                                            <p>- Added slashing history filter in masternode reward table</p>
+                                            <p>- Remove v-html in order to prevent XSS attacking</p>
+                                            <p>- Hide login section after logged in successfully</p>
+                                            <p>- Update api documentation</p>
+                                            <p>- Fix bugs: masternode status and  history status</p>
+                                        </div>
+                                    </b-dropdown-text>
+                                </div>
+                                <b-dropdown-divider
+                                    v-if="!isTomonet" />
+                                <b-dropdown-text
+                                    v-if="!isTomonet"
+                                    class="notification_bottom">
+                                    TomoMaster - {{ version }}
+                                </b-dropdown-text>
+                            </b-dropdown>
+                            <b-dropdown
+                                v-if="isTomonet"
+                                class="dd-setting ml-1"
+                                right
+                                offset="25"
+                                no-caret
+                                variant="primary">
+                                <template
+                                    slot="button-content">
+                                    <i class="tm-cog icon-2x"/>
+                                </template>
+                                <b-dropdown-item
+                                    :to="`/voter/${account}`"
+                                    class="dd-address">
+                                    {{ truncate(account, 20) }}
+                                </b-dropdown-item>
+                                <b-dropdown-divider />
+                                <b-dropdown-item
+                                    target="_bank"
+                                    href="https://bit.ly/2B6p29o">Help</b-dropdown-item>
+                                <b-dropdown-item to="/setting">Settings/Withdraws</b-dropdown-item>
+                                <b-dropdown-divider />
+                                <b-dropdown-item
+                                    href="/"
+                                    @click="signOut">Sign out</b-dropdown-item>
+                            </b-dropdown>
+                        </b-navbar-nav>
+                    </b-collapse>
                 </div>
             </b-navbar>
             <div class="main-content">
@@ -106,7 +244,7 @@
                                     <li class="list-inline-item">
                                         <a
                                             target="_blank"
-                                            href="/apidocs"><i class="tm-checklist mr-1"/>API Documentation</a>
+                                            href="/api-docs"><i class="tm-checklist mr-1"/>API Documentation</a>
                                     </li>
                                 </ul>
                             </div>
@@ -160,6 +298,7 @@
 <script>
 import axios from 'axios'
 import store from 'store'
+import moment from 'moment'
 import pkg from '../package.json'
 import AutoComplete from './components/AutoComplete.vue'
 export default {
@@ -176,11 +315,20 @@ export default {
             isTomonet: false,
             version: pkg.version,
             account: '',
-            items: []
+            items: [],
+            statusClass: '',
+            interval: '',
+            notifications: [],
+            readNoti: 0
         }
     },
     async updated () {
         await this.checkNetworkAndLogin()
+    },
+    destroyed () {
+        if (this.interval) {
+            clearInterval(this.interval)
+        }
     },
     created: async function () {
         let self = this
@@ -191,6 +339,9 @@ export default {
             }
             self.$bus.$on('logged', async () => {
                 await self.checkNetworkAndLogin()
+                setTimeout(async () => {
+                    await self.getNotification()
+                }, 500)
             })
             const candidates = await axios.get('/api/candidates')
             const map = candidates.data.items.map((c) => {
@@ -201,6 +352,14 @@ export default {
             })
             const mapping = await Promise.all(map)
             self.items = mapping
+            setTimeout(async () => {
+                await self.getNotification()
+            }, 500)
+            if (this.isTomonet) {
+                this.interval = setInterval(async () => {
+                    await this.getNotification()
+                }, 40000)
+            }
         } catch (e) {
             console.log(e)
         }
@@ -257,6 +416,46 @@ export default {
 
             this.$router.go({
                 path: '/'
+            })
+        },
+        async readClick () {
+            this.statusClass = 'display: none;'
+        },
+        async getNotification () {
+            try {
+                const self = this
+                if (self.account && self.isTomonet) {
+                    const { data } = await axios.get('/api/voters/' + self.account.toLowerCase() + '/getNotification')
+                    if (data.length > 0) {
+                        let items = []
+                        let readNoti = 0
+                        data.map(d => {
+                            if (!d.isRead) {
+                                readNoti++
+                            }
+                            items.push({
+                                event: d.event,
+                                createdAt: moment(d.createdAt).fromNow(),
+                                name: d.candidateName,
+                                candidate: d.candidate,
+                                isRead: d.isRead
+                            })
+                        })
+                        self.readNoti = readNoti
+                        self.notifications = items
+                    }
+                }
+            } catch (error) {
+                console.log(error)
+            }
+        },
+        async markReadAll () {
+            // mark read all
+            this.readNoti = 0
+            await axios.get('/api/voters/' + this.account.toLowerCase() + '/markReadAll')
+            this.notifications = this.notifications.map(n => {
+                n.isRead = true
+                return n
             })
         }
     }

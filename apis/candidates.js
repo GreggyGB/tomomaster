@@ -932,12 +932,99 @@ router.get('/slashed/:epoch', [
     if (!errors.isEmpty()) {
         return next(errors.array())
     }
-
     try {
         let epoch = req.params.epoch
-        const penalty = await db.Penalty.findOne({ epoch: epoch })
+        let response = {
+            epoch,
+            penalties: [],
+            networkId: config.get('blockchain.networkId')
+        }
+        let penalty
+        penalty = await db.Penalty.findOne({ epoch: epoch })
+        if (penalty && penalty.penalties.length > 0) {
+            response = penalty
+        } else {
+            penalty = await db.Status.find({ epoch: epoch, status: 'SLASHED' })
+            if (penalty.length > 0) {
+                await Promise.all(penalty.map(p => {
+                    response.penalties.push(p.candidate)
+                }))
+            }
+        }
 
-        return res.json(penalty)
+        return res.json(response)
+    } catch (e) {
+        return next(e)
+    }
+})
+
+router.get('/:candidate/slashedFilter', [
+    query('limit')
+        .isInt({ min: 0, max: 200 }).optional().withMessage('limit should greater than 0 and less than 200'),
+    query('page').isNumeric({ no_symbols: true }).optional().withMessage('page must be number'),
+    check('filterBy').isLength({ min: 1 }).exists().withMessage('filterBy is required')
+], async function (req, res, next) {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return next(errors.array())
+    }
+    try {
+        let limit = (req.query.limit) ? parseInt(req.query.limit) : 200
+        let skip
+        skip = (req.query.page) ? limit * (req.query.page - 1) : 0
+        const filterBy = req.query.filterBy
+        const candidate = req.params.candidate
+
+        let current = new Date()
+        const today = new Date()
+
+        let totalEpochs, epochs, fromTime
+
+        switch (filterBy) {
+        case 'week':
+            const aWeekAgo = new Date(current.setDate(current.getDate() - 7))
+            fromTime = aWeekAgo
+            break
+        case 'month':
+            const aMonthAgo = new Date(current.setMonth(current.getMonth() - 1))
+            fromTime = aMonthAgo
+            break
+        case 'year':
+            const aYearAgo = new Date(current.setFullYear(current.getFullYear() - 1))
+            fromTime = aYearAgo
+            break
+        default:
+            fromTime = new Date(current.setDate(current.getDate() - 7))
+            break
+        }
+
+        totalEpochs = await db.Status.countDocuments({
+            candidate: candidate.toLowerCase(),
+            status: 'SLASHED',
+            epochCreatedAt: {
+                $gte: fromTime,
+                $lt: today
+            }
+        }).lean().exec()
+        epochs = await db.Status.find({
+            candidate: candidate.toLowerCase(),
+            status: 'SLASHED',
+            epochCreatedAt: {
+                $gte: fromTime,
+                $lt: today
+            }
+        }).sort({ epoch: -1 }).limit(limit).skip(skip).lean().exec()
+
+        Promise.all(epochs.map(e => {
+            e.rewardTime = e.epochCreatedAt
+        })).catch(e => console.log(e))
+
+        return res.json({
+            items: epochs,
+            total: totalEpochs,
+            from: fromTime,
+            to: today
+        })
     } catch (e) {
         return next(e)
     }

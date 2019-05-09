@@ -5,6 +5,7 @@
             align-h="center"
             class="m-0">
             <b-card
+                v-if="!address"
                 :class="'col-12 col-md-8 col-lg-7 tomo-card tomo-card--lighter p-0'
                 + (loading ? ' tomo-loading' : '')">
                 <h4 class="color-white tomo-card__title tomo-card__title--big">Login</h4>
@@ -20,6 +21,7 @@
                             <b-form-select
                                 id="provider"
                                 v-model="provider"
+                                class="form-control"
                                 @change="onChangeSelect">
                                 <option
                                     value="tomowallet">TomoWallet (Recommended)</option>
@@ -119,6 +121,13 @@
                         <span
                             v-if="$v.hdPath.$dirty && !$v.hdPath.required"
                             class="text-danger">Required field</span>
+                        <small
+                            class="form-text text-muted">To unlock the wallet, try paths
+                            <code>m/44'/60'/0'</code>
+                            or <code>m/44'/60'/0'/0</code>
+                            with Ethereum App,<br>
+                            or try path <code>m/44'/889'/0'/0</code>
+                            with TomoChain App (on Ledger).</small>
                     </b-form-group>
 
                     <b-form-group
@@ -443,7 +452,11 @@ export default {
                     // let blks = await contract.getWithdrawBlockNumbers.call({ from: account })
 
                     const blks = await blksPromise
-                    await Promise.all(blks.map(async (it, index) => {
+
+                    // remove duplicate
+                    const blks2 = [...new Set(blks)]
+
+                    await Promise.all(blks2.map(async (it, index) => {
                         let blk = new BigNumber(it).toString()
                         if (blk !== '0') {
                             self.aw = true
@@ -480,7 +493,7 @@ export default {
                 })
             }
         }
-        if (self.provider === 'tomowallet') {
+        if (self.provider === 'tomowallet' && !self.address) {
             const hasQRCOde = self.loginByQRCode()
             if (await hasQRCOde) {
                 self.interval = setInterval(async () => {

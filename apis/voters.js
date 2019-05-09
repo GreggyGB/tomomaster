@@ -44,6 +44,22 @@ router.get('/:voter/candidates', [
             capacityNumber: { $ne: 0 }
         }).sort(sort).limit(limit).skip(skip).lean().exec()
 
+        let totalCandidates = db.Voter.aggregate([
+            {
+                $match: {
+                    smartContractAddress: config.get('blockchain.validatorAddress'),
+                    voter: (req.params.voter || '').toLowerCase(),
+                    capacityNumber: { $gt: 0 }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalVoted: { $sum: '$capacityNumber' }
+                }
+            }
+        ])
+
         let cs = voters.map(v => v.candidate)
 
         let candidates = await db.Candidate.find({
@@ -61,9 +77,11 @@ router.get('/:voter/candidates', [
             return _.pick(v, ['candidate', 'capacity', 'capacityNumber', 'totalCapacity',
                 'candidateName', 'status', 'owner'])
         })
+        const totalVoted = await totalCandidates
         return res.json({
             items: voters,
-            total: await total
+            total: await total,
+            totalVoted: totalVoted.length > 0 ? totalVoted[0].totalVoted : 0
         })
     } catch (e) {
         return next(e)
@@ -390,6 +408,32 @@ router.get('/calculatingReward1Day', [], async (req, res, next) => {
             return res.send(estimateReward.toString(10))
         }
         return res.send('N/A')
+    } catch (error) {
+        return next(error)
+    }
+})
+
+router.get('/:voter/getNotification', [], async (req, res, next) => {
+    try {
+        const voter = req.params.voter
+        const noti = await db.Notification.find({
+            voter: voter
+        }).sort({ createdAt: -1 }).limit(20)
+        return res.send(noti)
+    } catch (error) {
+        return next(error)
+    }
+})
+
+router.get('/:voter/markReadAll', [], async (req, res, next) => {
+    try {
+        const voter = req.params.voter
+        await db.Notification.updateMany({
+            voter: voter
+        }, {
+            isRead: true
+        })
+        return res.send('Done')
     } catch (error) {
         return next(error)
     }
