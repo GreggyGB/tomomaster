@@ -153,7 +153,7 @@
                             <a
                                 href="https://metamask.io/"
                                 target="_blank">Metamask Extension</a>
-                            then connect it to Tomochain Mainnet or Testnet.</p>
+                            then connect it to Caelum Testnet.</p>
                     </div>
                     <div class="buttons text-right">
                         <b-button
@@ -696,7 +696,7 @@ export default {
                 if (self.interval) {
                     clearInterval(self.interval)
                 }
-                self.$toasted.show('Make sure you choose correct tomochain network.', {
+                self.$toasted.show('Make sure you choose correct caelum network.', {
                     type : 'error'
                 })
             }
