@@ -151,9 +151,70 @@
                                         <b-dropdown-divider
                                             v-if="value.event === 'Resign' &&
                                             key !== notifications.length - 1"/>
+                                        <b-dropdown-text v-if="value.event === 'Withdraw'">
+                                            <div>
+                                                <span
+                                                    :style="value.isRead ? '' :
+                                                    'font-weight: bold;'"
+                                                    class="notification__content">
+                                                    <span class="notification_label withdraw">Withdraw</span>
+                                                    {{ value.amount }} unvoted TOMO are ready to withdraw
+                                                </span>
+                                                <div class="notification__time">TomoMaster -
+                                                    {{ value.createdAt }}</div>
+                                            </div>
+                                        </b-dropdown-text>
+                                        <b-dropdown-divider
+                                            v-if="value.event === 'Withdraw' &&
+                                            key !== notifications.length - 1"/>
                                     </div>
                                 </div>
-                                <div v-if="!isTomonet">
+                                <div
+                                    v-if="!isTomonet"
+                                    class="notification_body">
+                                    <b-dropdown-text>
+                                        <div style="font-size: 13px;">
+                                            <strong>TomoMaster up to 1.5.1</strong>
+                                            <p>- Hide staking ROI if a masternode out of top 150</p>
+                                            <p>- Fix missing latest reward record</p>
+                                        </div>
+                                    </b-dropdown-text>
+                                    <b-dropdown-divider/>
+                                    <b-dropdown-text>
+                                        <div style="font-size: 13px;">
+                                            <strong>TomoMaster up to 1.5.0</strong>
+                                            <p>- Display average ROI for masternode owner and voter</p>
+                                            <p>- Display owner ROI and voter ROI in masternode detail page</p>
+                                            <p>- Add withdrawal notification</p>
+                                            <p>- Add sitemap</p>
+                                        </div>
+                                    </b-dropdown-text>
+                                    <b-dropdown-divider/>
+                                    <b-dropdown-text>
+                                        <div style="font-size: 13px;">
+                                            <strong>TomoMaster up to 1.4.3</strong>
+                                            <p>- Fix id injection issue</p>
+                                        </div>
+                                    </b-dropdown-text>
+                                    <b-dropdown-divider/>
+                                    <b-dropdown-text>
+                                        <div style="font-size: 13px;">
+                                            <strong>TomoMaster up to 1.4.2</strong>
+                                            <p>- Fix proposing a new masternode issue</p>
+                                            <p>- Fix incorrect address when loggin in by mnemonic words</p>
+                                        </div>
+                                    </b-dropdown-text>
+                                    <b-dropdown-divider/>
+                                    <b-dropdown-text>
+                                        <div style="font-size: 13px;">
+                                            <strong>TomoMaster up to 1.4.1</strong>
+                                            New features have been added to.
+                                            <p>- Disable sorting masternodes by name</p>
+                                            <p>- Hide voters who unvoted all TOMO</p>
+                                            <p>- Show slashing history</p>
+                                        </div>
+                                    </b-dropdown-text>
+                                    <b-dropdown-divider/>
                                     <b-dropdown-text>
                                         <div style="font-size: 13px;">
                                             <strong>TomoMaster up to 1.4.0</strong>
@@ -303,6 +364,12 @@ import pkg from '../package.json'
 import AutoComplete from './components/AutoComplete.vue'
 export default {
     name: 'App',
+    metaInfo: {
+        title: 'TomoChain Governance DApp | TomoMaster',
+        meta: [
+            { name: 'description', content: 'Tomomaster - Providing a professional UI which allows coin-holders to stake for masternodes, decentralized governance and explore masternode performance statistics' } // eslint-disable-line
+        ]
+    },
     components: {
         AutoComplete
     },
@@ -397,7 +464,8 @@ export default {
             let self = this
             setTimeout(async () => {
                 try {
-                    const contract = await self.getTomoValidatorInstance()
+                    let contract// = await self.getTomoValidatorInstance()
+                    contract = self.TomoValidator
                     if (store.get('address')) {
                         self.account = store.get('address').toLowerCase()
                     } else {

@@ -271,9 +271,16 @@
 import axios from 'axios'
 import BigNumber from 'bignumber.js'
 import moment from 'moment'
+import store from 'store'
 
 export default {
     name: 'App',
+    metaInfo: {
+        title: 'Staker Details | TomoMaster',
+        meta: [
+            { name: 'description', content: 'Staking history, Reward history, Masternode list, Transaction list. You can use mobile, desktop, hardware wallet - ledger nano, trezor to stake TomoChain' } // eslint-disable-line
+        ]
+    },
     data () {
         return {
             candidateFields: [
@@ -411,7 +418,7 @@ export default {
     update () {},
     created: async function () {
         let self = this
-        self.config = await self.appConfig()
+        self.config = store.get('config') || await self.appConfig()
 
         self.getCandidates()
         self.getRewards()
@@ -501,7 +508,7 @@ export default {
                         event: tx.event,
                         cap: new BigNumber(tx.capacity).div(10 ** 18).toNumber(),
                         createdAt: moment(tx.createdAt).fromNow(),
-                        name: tx.name,
+                        name: tx.name || '---',
                         candidateCap: (new BigNumber(tx.currentCandidateCap).div(10 ** 18).toNumber()) || '---'
                     })
                 })

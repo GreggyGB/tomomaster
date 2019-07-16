@@ -70,6 +70,25 @@
                             v-if="$v.mnemonic.$dirty && !$v.mnemonic.required"
                             class="text-danger">Required field</span>
                     </b-form-group>
+                    <b-form-group
+                        v-if="provider === 'custom'"
+                        class="mb-4"
+                        label="Select HD derivation path(MNEMONIC)"
+                        label-for="hdPath">
+                        <b-form-input
+                            :class="getValidationClass('hdPath')"
+                            :value="hdPath"
+                            v-model="hdPath"
+                            type="text" />
+                        <span
+                            v-if="$v.hdPath.$dirty && !$v.hdPath.required"
+                            class="text-danger">Required field</span>
+                        <small
+                            class="form-text text-muted">To unlock the wallet, try paths
+                            <code>m/44'/60'/0'/0</code>
+                            or <code>m/44'/60'/0'</code>
+                            or <code>m/44'/889'/0'/0</code></small>
+                    </b-form-group>
 
                     <b-form-group
                         v-if="provider === 'tomowallet'"
@@ -405,7 +424,7 @@ export default {
         this.provider = this.NetworkProvider || 'tomowallet'
         let self = this
         self.hdWallets = self.hdWallets || {}
-        self.config = await self.appConfig()
+        self.config = store.get('config') || await self.appConfig()
         self.chainConfig = self.config.blockchain || {}
         self.networks.rpc = self.chainConfig.rpc
 
@@ -419,7 +438,8 @@ export default {
                 }
                 if (self.web3) {
                     try {
-                        contract = await self.getTomoValidatorInstance()
+                        // contract = await self.getTomoValidatorInstance()
+                        contract = self.TomoValidator
                         self.gasPrice = await self.web3.eth.getGasPrice()
                     } catch (error) {
                         throw Error('Make sure you choose correct tomochain network.')
@@ -448,7 +468,8 @@ export default {
                 })
                 let whPromise = axios.get(`/api/owners/${self.address}/withdraws?limit=100`)
                 if (contract) {
-                    let blksPromise = contract.getWithdrawBlockNumbers.call({ from: account })
+                    // let blksPromise = contract.getWithdrawBlockNumbers.call({ from: account })
+                    let blksPromise = contract.methods.getWithdrawBlockNumbers().call({ from: account })
                     // let blks = await contract.getWithdrawBlockNumbers.call({ from: account })
 
                     const blks = await blksPromise
@@ -465,7 +486,8 @@ export default {
                             blockNumber: blk
                         }
                         wd.cap = new BigNumber(
-                            await contract.getWithdrawCap.call(blk, { from: account })
+                            // await contract.getWithdrawCap.call(blk, { from: account })
+                            await contract.methods.getWithdrawCap(blk).call({ from: account })
                         ).div(10 ** 18).toFormat()
                         wd.estimatedTime = await self.getSecondsToHms(
                             (wd.blockNumber - self.chainConfig.blockNumber)
@@ -543,6 +565,7 @@ export default {
                     await self.unlockTrezor()
                     wallets = await self.loadTrezorWallets(offset, limit)
                 } else {
+                    await self.unlockLedger()
                     wallets = await self.loadMultipleLedgerWallets(offset, limit)
                 }
                 if (Object.keys(wallets).length > 0) {
@@ -691,7 +714,8 @@ export default {
 
             await self.setupProvider(this.provider, web3)
             try {
-                contract = await self.getTomoValidatorInstance()
+                // contract = await self.getTomoValidatorInstance()
+                contract = self.TomoValidator
             } catch (error) {
                 if (self.interval) {
                     clearInterval(self.interval)
@@ -708,7 +732,8 @@ export default {
                 }
             })
             if (contract) {
-                let blks = await contract.getWithdrawBlockNumbers.call({ from: account })
+                // let blks = await contract.getWithdrawBlockNumbers.call({ from: account })
+                let blks = await contract.methods.getWithdrawBlockNumbers().call({ from: account })
 
                 await Promise.all(blks.map(async (it, index) => {
                     let blk = new BigNumber(it).toString()
@@ -719,7 +744,8 @@ export default {
                         blockNumber: blk
                     }
                     wd.cap = new BigNumber(
-                        await contract.getWithdrawCap.call(blk, { from: account })
+                        // await contract.getWithdrawCap.call(blk, { from: account })
+                        await contract.methods.getWithdrawCap(blk).call({ from: account })
                     ).div(10 ** 18).toFormat()
                     wd.estimatedTime = await self.getSecondsToHms(
                         (wd.blockNumber - self.chainConfig.blockNumber)

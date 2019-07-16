@@ -182,6 +182,28 @@
                                 {{ value }}
                             </p>
                         </div>
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2 tomo-info">
+                            <p class="tomo-info__title">
+                                <i class="tm-dot tomo-info__icon" />
+                                <span class="tomo-info__text">Est. Staking ROI</span>
+                            </p>
+                            <p
+                                id="tomo-info__description--balance"
+                                class="tomo-info__description">
+                                {{ voterROI ? voterROI + '%' : '---' }}
+                            </p>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2 tomo-info">
+                            <p class="tomo-info__title">
+                                <i class="tm-dot tomo-info__icon" />
+                                <span class="tomo-info__text">Est. Owner ROI</span>
+                            </p>
+                            <p
+                                id="tomo-info__description--balance"
+                                class="tomo-info__description">
+                                {{ mnROI ? mnROI + '%' : '---' }}
+                            </p>
+                        </div>
                     </div>
                 </b-card>
                 <div
@@ -271,7 +293,7 @@
                     :per-page="mnRewardsPerPage"
                     :show-empty="true"
                     :class="`tomo-table tomo-table--mnrewards${rewardLoading ? ' loading' : ''}`"
-                    empty-text="There are no rewards to show"
+                    :empty-text="`There are no ${(currentTab !== '' ? 'records' : 'rewards')} to show`"
                     stacked="md" >
 
                     <template
@@ -453,6 +475,12 @@ import store from 'store'
 
 export default {
     name: 'App',
+    metaInfo: {
+        title: 'Candidate Details | TomoMaster',
+        meta: [
+            { name: 'description', content: 'Staking TomoChain Masternode to get the reward every epochs. You can use mobile, desktop, hardware wallet - ledger nano, trezor to stake TomoChain' } // eslint-disable-line
+        ]
+    },
     components: {
         chart: Chart
     },
@@ -576,7 +604,9 @@ export default {
             loadedCPU: true,
             loadedMEM: true,
             isCandidate: true,
-            currentTab: ''
+            currentTab: '',
+            voterROI: '',
+            mnROI: ''
         }
     },
     computed: {
@@ -598,12 +628,13 @@ export default {
     },
     created: async function () {
         let self = this
-        self.config = await this.appConfig()
+        self.config = store.get('config') || await this.appConfig()
         self.currentBlock = self.config.blockchain.blockNumber
         self.isReady = !!self.web3
         try {
             if (self.isReady) {
-                let contract = self.TomoValidator.deployed()
+                let contract// = self.TomoValidator.deployed()
+                contract = self.TomoValidator
                 if (store.get('address')) {
                     self.account = store.get('address').toLowerCase()
                 } else {
@@ -624,10 +655,13 @@ export default {
             console.log(error)
         }
 
-        await self.getCandidateData()
+        self.getCandidateData()
         self.getCandidateVoters()
         self.getCandidateTransactions()
         self.getCandidateRewards()
+        if (self.candidate.rank) {
+            self.getAnnualReward()
+        }
     },
     mounted () {},
     methods: {
@@ -685,13 +719,17 @@ export default {
                     })
                     if (self.account) {
                         try {
-                            let contract = await self.getTomoValidatorInstance()
-                            youVoted = await contract.getVoterCap(address, self.account)
-                            self.candidate.cap = await contract.getCandidateCap(address).div(1e18).toNumber()
+                            let contract// = await self.getTomoValidatorInstance()
+                            contract = self.TomoValidator
+                            // youVoted = await contract.getVoterCap(address, self.account)
+                            youVoted = await contract.methods.getVoterCap(address, self.account)
+                                .call()
+                            self.candidate.cap = await contract.methods.getCandidateCap(address)
+                                .call().div(1e18).toNumber()
                         } catch (e) {}
                     }
 
-                    self.candidate.voted = youVoted.div(10 ** 18).toNumber()
+                    self.candidate.voted = new BigNumber(youVoted).div(10 ** 18).toNumber()
                 }
 
                 self.loading = false
@@ -897,6 +935,19 @@ export default {
                 self.rewardLoading = false
                 console.log(error)
             }
+        },
+        async getAnnualReward () {
+            axios.get('/api/voters/annualReward?candidate=' + this.candidate.address)
+                .then((result) => {
+                    if (result.data && result.data.voterROI) {
+                        this.voterROI = result.data.voterROI.toFixed(2)
+                        this.mnROI = result.data.mnROI.toFixed(2)
+                    }
+                })
+                .catch(error => {
+                    console.log(error)
+                    this.$toasted.show(error, { type: 'error' })
+                })
         }
     }
 }
