@@ -174,12 +174,14 @@
 import axios from 'axios'
 import BigNumber from 'bignumber.js'
 import store from 'store'
+import urljoin from 'url-join'
 
 export default {
     name: 'App',
     data () {
         return {
             chainConfig: {},
+            config: {},
             fields: [
                 { key: 'rank', label: 'Rank' },
                 { key: 'address', label: 'Address', sortable: false },
@@ -224,6 +226,7 @@ export default {
         const config = store.get('config') || await self.appConfig()
         self.chainConfig = config.blockchain
         self.currentBlock = self.chainConfig.blockNumber
+        self.config = store.get('config') || await self.appConfig()
 
         try {
             if (self.isReady) {
@@ -244,6 +247,7 @@ export default {
         }
         self.getDataFromApi()
         self.averageroi()
+        self.getSyncStatus()
     },
     mounted () { },
     methods: {
@@ -502,6 +506,28 @@ export default {
                     if (result.data && result.data.averageStakingROI) {
                         this.averageStakingROI = result.data.averageStakingROI.toFixed(2)
                         this.averageOwnerROI = result.data.averageOwnerROI.toFixed(2)
+                    }
+                })
+                .catch(error => {
+                    console.log(error)
+                    this.$toasted.show(error, { type: 'error' })
+                })
+        },
+        async getSyncStatus () {
+            axios.get(urljoin(this.config.tomoscanUrl, '/api/blocks?limit=1'))
+                .then(result => {
+                    this.serverblock = Math.floor(this.currentBlock / this.config.blockchain.epoch) + 1
+                    this.scanblock = Math.floor(result.data.total / this.config.blockchain.epoch) + 1
+                    if (this.serverblock < this.scanblock) {
+                      const toastMessage = 'Our backend seems out of sync. Results may inaccurate'
+                      this.$toasted.show(toastMessage, {
+                          type: 'error',
+                          icon : 'error_outline',
+                          duration: '15000',
+                          position: 'top-center',
+                          fullWidth: true,
+                          fitToScreen: true
+                      })
                     }
                 })
                 .catch(error => {
