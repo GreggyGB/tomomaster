@@ -174,6 +174,24 @@
                                     class="notification_body">
                                     <b-dropdown-text>
                                         <div style="font-size: 13px;">
+                                            <strong>TomoMaster up to 1.6.0</strong>
+                                            <p>- Add Auto tweeting when a new candidate is proposed</p>
+                                            <p>- Update searching</p>
+                                            <p>- Add top page pagination on small screen</p>
+                                            <p>- Remove hardware wallet session storing</p>
+                                        </div>
+                                    </b-dropdown-text>
+                                    <b-dropdown-divider/>
+                                    <b-dropdown-text>
+                                        <div style="font-size: 13px;">
+                                            <strong>TomoMaster up to 1.5.2</strong>
+                                            <p>- Hide latest signed block for proposed masternode</p>
+                                            <p>- Refactor code</p>
+                                        </div>
+                                    </b-dropdown-text>
+                                    <b-dropdown-divider/>
+                                    <b-dropdown-text>
+                                        <div style="font-size: 13px;">
                                             <strong>TomoMaster up to 1.5.1</strong>
                                             <p>- Hide staking ROI if a masternode out of top 150</p>
                                             <p>- Fix missing latest reward record</p>
@@ -202,33 +220,6 @@
                                             <strong>TomoMaster up to 1.4.2</strong>
                                             <p>- Fix proposing a new masternode issue</p>
                                             <p>- Fix incorrect address when loggin in by mnemonic words</p>
-                                        </div>
-                                    </b-dropdown-text>
-                                    <b-dropdown-divider/>
-                                    <b-dropdown-text>
-                                        <div style="font-size: 13px;">
-                                            <strong>TomoMaster up to 1.4.1</strong>
-                                            New features have been added to.
-                                            <p>- Disable sorting masternodes by name</p>
-                                            <p>- Hide voters who unvoted all TOMO</p>
-                                            <p>- Show slashing history</p>
-                                        </div>
-                                    </b-dropdown-text>
-                                    <b-dropdown-divider/>
-                                    <b-dropdown-text>
-                                        <div style="font-size: 13px;">
-                                            <strong>TomoMaster up to 1.4.0</strong>
-                                            New features have been added to.
-                                            <p>- Added notification for propose, resign,
-                                            slash and out of top 150</p>
-                                            <p>- Add rank column in masternode list table</p>
-                                            <p>- Add masternode name, current cap columns
-                                            in voter transaction table</p>
-                                            <p>- Added slashing history filter in masternode reward table</p>
-                                            <p>- Remove v-html in order to prevent XSS attacking</p>
-                                            <p>- Hide login section after logged in successfully</p>
-                                            <p>- Update api documentation</p>
-                                            <p>- Fix bugs: masternode status and  history status</p>
                                         </div>
                                     </b-dropdown-text>
                                 </div>
@@ -410,15 +401,15 @@ export default {
                     await self.getNotification()
                 }, 500)
             })
-            const candidates = await axios.get('/api/candidates')
-            const map = candidates.data.items.map((c) => {
-                return {
-                    name: c.name ? c.name : 'Anonymous',
-                    address: c.candidate
-                }
-            })
-            const mapping = await Promise.all(map)
-            self.items = mapping
+            // const candidates = await axios.get('/api/candidates')
+            // const map = candidates.data.items.map((c) => {
+            //     return {
+            //         name: c.name ? c.name : 'Anonymous',
+            //         address: c.candidate
+            //     }
+            // })
+            // const mapping = await Promise.all(map)
+            // self.items = mapping
             setTimeout(async () => {
                 await self.getNotification()
             }, 500)
@@ -466,12 +457,8 @@ export default {
                 try {
                     let contract// = await self.getTomoValidatorInstance()
                     contract = self.TomoValidator
-                    if (store.get('address')) {
-                        self.account = store.get('address').toLowerCase()
-                    } else {
-                        self.account = this.$store.state.walletLoggedIn
-                            ? this.$store.state.walletLoggedIn : await self.getAccount()
-                    }
+                    self.account = store.get('address') ||
+                        self.$store.state.address || await self.getAccount()
                     if (self.account && contract) {
                         self.isTomonet = true
                     }
@@ -480,7 +467,7 @@ export default {
         },
         signOut () {
             store.clearAll()
-            this.$store.state.walletLoggedIn = null
+            this.$store.state.address = null
 
             this.$router.go({
                 path: '/'

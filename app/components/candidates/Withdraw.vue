@@ -143,7 +143,7 @@ export default {
     },
     async mounted () {
         const self = this
-        self.config = store.get('config') || await self.appConfig()
+        self.config = store.get('configMaster') || await self.appConfig()
         self.chainConfig = self.config.blockchain || {}
         self.isReady = !!this.web3
         if (!self.coinbase) {
@@ -180,11 +180,10 @@ export default {
             let self = this
             let contract// = await self.getTomoValidatorInstance()
             contract = self.TomoValidator
-            let account = await self.getAccount()
-            account = account.toLowerCase()
+            const account = (await self.getAccount() || '').toLowerCase()
             self.loading = true
             try {
-                console.log('==>', blockNumber, index)
+                // console.log('==>', blockNumber, index)
                 let txParams = {
                     from: account,
                     gasPrice: self.web3.utils.toHex(self.gasPrice),
@@ -196,8 +195,6 @@ export default {
                     self.NetworkProvider === 'trezor') {
                     let nonce = await self.web3.eth.getTransactionCount(account)
                     // let dataTx = contract.withdraw.request(String(blockNumber), String(index)).params[0]
-                    console.log(blockNumber)
-                    console.log(index)
                     const data = await contract.methods.withdraw(blockNumber, index).encodeABI()
                     const dataTx = {
                         data,

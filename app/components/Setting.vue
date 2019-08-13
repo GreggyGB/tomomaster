@@ -85,9 +85,15 @@
                             class="text-danger">Required field</span>
                         <small
                             class="form-text text-muted">To unlock the wallet, try paths
-                            <code>m/44'/60'/0'/0</code>
-                            or <code>m/44'/60'/0'</code>
-                            or <code>m/44'/889'/0'/0</code></small>
+                            <code
+                                class="hd-path"
+                                @click="changePath(`m/44'/60'/0'/0`)">m/44'/60'/0'/0</code> or
+                            <code
+                                class="hd-path"
+                                @click="changePath(`m/44'/60'/0'`)">m/44'/60'/0'</code> or
+                            <code
+                                class="hd-path"
+                                @click="changePath(`m/44'/889'/0'/0`)">m/44'/889'/0'/0</code></small>
                     </b-form-group>
 
                     <b-form-group
@@ -142,10 +148,16 @@
                             class="text-danger">Required field</span>
                         <small
                             class="form-text text-muted">To unlock the wallet, try paths
-                            <code>m/44'/60'/0'</code>
-                            or <code>m/44'/60'/0'/0</code>
+                            <code
+                                class="hd-path"
+                                @click="changePath(`m/44'/60'/0'`)">m/44'/60'/0'</code>
+                            or <code
+                                class="hd-path"
+                                @click="changePath(`m/44'/60'/0'/0`)">m/44'/60'/0'/0</code>
                             with Ethereum App,<br>
-                            or try path <code>m/44'/889'/0'/0</code>
+                            or try path <code
+                                class="hd-path"
+                                @click="changePath(`m/44'/889'/0'/0`)">m/44'/889'/0'/0</code>
                             with TomoChain App (on Ledger).</small>
                     </b-form-group>
 
@@ -424,7 +436,7 @@ export default {
         this.provider = this.NetworkProvider || 'tomowallet'
         let self = this
         self.hdWallets = self.hdWallets || {}
-        self.config = store.get('config') || await self.appConfig()
+        self.config = store.get('configMaster') || await self.appConfig()
         self.chainConfig = self.config.blockchain || {}
         self.networks.rpc = self.chainConfig.rpc
 
@@ -449,8 +461,8 @@ export default {
                 if (store.get('address') && self.isReady) {
                     account = store.get('address').toLowerCase()
                 } else {
-                    account = this.$store.state.walletLoggedIn
-                        ? this.$store.state.walletLoggedIn : (self.web3 ? await self.getAccount() : false)
+                    account = this.$store.state.address
+                        ? this.$store.state.address : (self.web3 ? await self.getAccount() : false)
                 }
 
                 if (!account) {
@@ -585,7 +597,7 @@ export default {
             store.clearAll()
             const self = this
             self.address = ''
-            self.$store.state.walletLoggedIn = null
+            self.$store.state.address = null
             // clear old data
             self.withdraws = []
             self.aw = []
@@ -622,6 +634,7 @@ export default {
                     store.set('offset', offset)
                     break
                 default:
+                    self.mnemonic = self.mnemonic.trim()
                     const walletProvider =
                         (self.mnemonic.indexOf(' ') >= 0)
                             ? new HDWalletProvider(
@@ -634,11 +647,13 @@ export default {
                 await self.setupProvider(this.provider, wjs)
                 await self.setupAccount()
                 self.loading = false
-                self.$store.state.walletLoggedIn = null
 
-                store.set('address', self.address.toLowerCase())
-                store.set('network', self.provider)
                 if (self.address) {
+                    self.$store.state.address = self.address.toLowerCase()
+                    if (self.provider === 'metamask') {
+                        store.set('address', self.address.toLowerCase())
+                        store.set('network', self.provider)
+                    }
                     self.$bus.$emit('logged', 'user logged')
                     self.$toasted.show('Network Provider was changed successfully')
                 } else {
@@ -707,7 +722,7 @@ export default {
             const self = this
             let contract
             self.address = account
-            self.$store.state.walletLoggedIn = account
+            self.$store.state.address = account
             const web3 = new Web3(new HDWalletProvider(
                 '',
                 self.chainConfig.rpc, 0, 1, self.hdPath))
@@ -804,6 +819,9 @@ export default {
             await this.selectHdPath(Object.keys(this.hdWallets).length, this.defaultWalletNumber)
             document.getElementById('moreHdAddresses').style.cursor = 'pointer'
             document.body.style.cursor = 'default'
+        },
+        changePath (path) {
+            this.hdPath = path
         }
     }
 }

@@ -84,6 +84,15 @@
         <div
             v-else
             class="container">
+            <b-pagination
+                v-if="mobileCheck && totalRows > 0 && totalRows > perPage"
+                :total-rows="totalRows"
+                :per-page="perPage"
+                v-model="currentPage"
+                align="center"
+                class="tomo-pagination"
+                style="margin-bottom: 50px !important;"
+                @change="pageChange"/>
             <b-table
                 :items="candidates"
                 :fields="fields"
@@ -216,14 +225,19 @@ export default {
             currentBlock: ''
         }
     },
-    computed: {},
+    computed: {
+        mobileCheck: () => {
+            const isAndroid = navigator.userAgent.match(/Android/i)
+            const isIOS = navigator.userAgent.match(/iPhone|iPad|iPod/i)
+            return (isAndroid || isIOS)
+        }
+    },
     watch: {},
     updated () {},
     created: async function () {
         let self = this
-        let account
         self.isReady = !!self.web3
-        const config = store.get('config') || await self.appConfig()
+        const config = store.get('configMaster') || await self.appConfig()
         self.chainConfig = config.blockchain
         self.currentBlock = self.chainConfig.blockNumber
         self.config = store.get('config') || await self.appConfig()
@@ -232,13 +246,9 @@ export default {
             if (self.isReady) {
                 let contract// = await self.getTomoValidatorInstance()
                 contract = self.TomoValidator
-                if (store.get('address')) {
-                    account = store.get('address').toLowerCase()
-                } else {
-                    account = this.$store.state.walletLoggedIn
-                        ? this.$store.state.walletLoggedIn : await self.getAccount()
-                }
-                if (account && contract) {
+                self.account = store.get('address') ||
+                    self.$store.state.address || await self.getAccount()
+                if (self.account && contract) {
                     self.isTomonet = true
                 }
             }

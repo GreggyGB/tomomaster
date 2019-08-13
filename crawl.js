@@ -10,12 +10,15 @@ const moment = require('moment')
 const logger = require('./helpers/logger')
 const axios = require('axios')
 const _ = require('lodash')
+const TwitterHelper = require('./helpers/twitter')
 
 process.setMaxListeners(100)
 
-var web3 = new Web3Ws()
-var validator = new Validator(web3)
-var cpValidator = 0
+let web3 = new Web3Ws()
+let validator = new Validator(web3)
+let cpValidator = 0
+
+let tweetedMN = ''
 
 async function watchValidator () {
     var blockNumber = cpValidator || await web3.eth.getBlockNumber()
@@ -25,7 +28,6 @@ async function watchValidator () {
             config.get('blockchain.validatorAddress'), blockNumber)
 
         cpValidator = await web3.eth.getBlockNumber()
-
         return validator.getPastEvents('allEvents', {
             fromBlock: blockNumber,
             toBlock: 'latest'
@@ -39,7 +41,8 @@ async function watchValidator () {
                 let capacity = result.returnValues._cap
                 let blk = await web3.eth.getBlock(result.blockNumber)
                 let createdAt = moment.unix(blk.timestamp).utc()
-                if (!voter && (event.event === 'Resign' || event.event === 'Withdraw' || event.event === 'Propose')) {
+                if (!voter && (event.event === 'Resign' ||
+                    event.event === 'Withdraw' || event.event === 'Propose')) {
                     voter = owner
                 }
                 if (result.event === 'Withdraw') {
@@ -66,6 +69,15 @@ async function watchValidator () {
                         status: 'PROPOSED',
                         epochCreatedAt: createdAt
                     }, { upsert: true })
+                    // Tweet new candidate
+                    if (tweetedMN !== candidate) {
+                        tweetedMN = candidate
+                        await TwitterHelper.tweetNewMN(
+                            voter,
+                            candidate,
+                            (new BigNumber(capacity)).div(1e18).toString(10),
+                            result.transactionHash)
+                    }
                 }
 
                 // get balance

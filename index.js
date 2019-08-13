@@ -42,12 +42,18 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(docs))
 app.use(require('./apis'))
 app.use(require('./middlewares/sitemap'))
 
+app.get('*', function (req, res) {
+    let p
+    if (process.env.NODE_ENV === 'development') {
+        p = path.resolve(__dirname, 'index.html')
+    } else {
+        p = path.resolve(__dirname, './build', 'index.html')
+    }
+    return res.sendFile(p)
+})
+
 // error handler
 app.use(require('./middlewares/error'))
-
-app.get('*', function (req, res) {
-    return res.sendFile(path.join(__dirname, 'index.html'))
-})
 
 // start server
 server.listen(config.get('server.port'), config.get('server.host'), function () {
